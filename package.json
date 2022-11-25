@@ -1,0 +1,24 @@
+{
+  "name": "insert-image-s3-bucket",
+  "version": "1.0.0",
+  "description": "project to test how to insert a imagem in a s3 bucket on aws",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon src/index",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Rafael Silva de Lima",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1059.0",
+    "cors": "^2.8.5",
+    "dotenv": "^14.2.0",
+    "express": "^4.17.2",
+    "express-fileupload": "^1.2.1",
+    "fs": "^0.0.1-security",
+    "jade": "^1.11.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemon": "^2.0.15",
+    "sucrase": "^3.20.3"
+  }
+}
