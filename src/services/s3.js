@@ -23,6 +23,7 @@ function uploadFile(file, res) {
   const s3Params = {
     Bucket: bucketName,
     Body: fileStream,
+    ACL: 'public-read',
     Key: key,
   };
 
