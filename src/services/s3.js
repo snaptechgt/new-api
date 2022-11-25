@@ -23,7 +23,6 @@ function uploadFile(file, res) {
   const s3Params = {
     Bucket: bucketName,
     Body: fileStream,
-    ACL: 'public-read',
     Key: key,
   };
 
@@ -39,6 +38,7 @@ function uploadFile(file, res) {
     };
     console.log(returnData);
     res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Access-Control-Allow-Origin','*');
     res.json(JSON.stringify(returnData));
     res.end();
   });
