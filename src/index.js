@@ -9,10 +9,31 @@ const app = express();
 import dotenv from "dotenv";
 dotenv.config();
 
+// CORS configuration - must be before auth middleware
+import cors from "cors";
+const corsOptions = {
+  origin: ['http://localhost:5173', 'https://new-api-r82n.onrender.com'],
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Handle preflight requests
+
 // Basic Auth Middleware
 const ACCESS_KEY = process.env.ACCESS_KEY || "Cfb123";
 
 function requireAuth(req, res, next) {
+  // Skip auth for GET / and OPTIONS requests
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
+  
+  if (req.method === 'GET' && req.path === '/') {
+    return next();
+  }
+  
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Basic ')) {
@@ -35,18 +56,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(path.dirname(new URL(import.meta.url).pathname), "public")));
 
-// Apply auth to all routes except GET /
+// Apply auth to all routes except GET / and OPTIONS
 app.use((req, res, next) => {
   if (req.method === 'GET' && req.path === '/') {
+    return next();
+  }
+  if (req.method === 'OPTIONS') {
     return next();
   }
   requireAuth(req, res, next);
 });
 
 app.use("/", indexRouter);
-
-import cors from "cors";
-app.use(cors());
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
