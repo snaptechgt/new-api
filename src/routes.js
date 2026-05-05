@@ -10,13 +10,23 @@ routes.get("/", (req, res) => res.json({ status: "Server running." }));
 
 routes.post("/single", upload.single("image"), async (req, res) => {
   if (req.file !== undefined) {
-    // uploading to AWS S3
-    const response = uploadFile(req.file, res);
-    console.log(response);
-    // Deleting from local if uploaded in S3 bucket
-    await unlink(req.file.path);
+    try {
+      // uploading to AWS S3
+      const returnData = await uploadFile(req.file);
+      console.log(returnData);
+      
+      // Deleting from local if uploaded in S3 bucket
+      await unlink(req.file.path);
+      
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Access-Control-Allow-Origin", "*");
+      res.json(returnData);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Upload failed" });
+    }
   } else {
-    res.send("error, no file submitted.");
+    res.status(400).send("error, no file submitted.");
   }
 });
 

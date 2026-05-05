@@ -18,7 +18,7 @@ const s3Client = new S3Client({
 });
 
 // UPLOAD FILE TO S3
-function uploadFile(file, res) {
+async function uploadFile(file) {
   const fileStream = fs.createReadStream(file.path);
   const fileName = file.filename;
   const key = "img/" + fileName;
@@ -32,20 +32,15 @@ function uploadFile(file, res) {
 
   console.log(s3Params);
 
-  return s3Client.send(new PutObjectCommand(s3Params), (err, data) => {
-    if (err) {
-      console.log(err);
-      return res.end();
-    }
-    const returnData = {
+  try {
+    await s3Client.send(new PutObjectCommand(s3Params));
+    return {
       url: "https://" + bucketName + ".s3.amazonaws.com/" + key,
     };
-    console.log(returnData);
-    res.setHeader("Content-Type", "application/json");
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.json(JSON.stringify(returnData));
-    res.end();
-  });
+  } catch (err) {
+    console.log(err);
+    throw err;
+  }
 }
 
 export { uploadFile };
