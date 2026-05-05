@@ -1,48 +1,51 @@
-require("dotenv").config();
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import fs from "fs";
+import dotenv from "dotenv";
 
-const S3 = require("aws-sdk/clients/s3");
-const fs = require("fs");
+dotenv.config();
 
 const bucketName = process.env.AWSS3_BUCKET;
 const region = process.env.AWSREGION;
 const accessKeyId = process.env.AWSACCESS_KEY_ID;
 const secretAccessKey = process.env.AWSSECRET_ACCESS_KEY;
 
-const s3 = new S3({
+const s3Client = new S3Client({
   region,
-  accessKeyId,
-  secretAccessKey,
+  credentials: {
+    accessKeyId,
+    secretAccessKey,
+  },
 });
 
 // UPLOAD FILE TO S3
 function uploadFile(file, res) {
   const fileStream = fs.createReadStream(file.path);
   const fileName = file.filename;
-  var key = "img/" + fileName;
+  const key = "img/" + fileName;
 
   const s3Params = {
     Bucket: bucketName,
     Body: fileStream,
-    ACL: 'public-read',
+    ACL: "public-read",
     Key: key,
   };
 
   console.log(s3Params);
 
-  return s3.putObject(s3Params, (err, data) => {
-    if(err){
+  return s3Client.send(new PutObjectCommand(s3Params), (err, data) => {
+    if (err) {
       console.log(err);
       return res.end();
     }
-    var returnData = {
-      url: "https://" + bucketName + ".s3.amazonaws.com/" + key
+    const returnData = {
+      url: "https://" + bucketName + ".s3.amazonaws.com/" + key,
     };
     console.log(returnData);
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Access-Control-Allow-Origin','*');
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Access-Control-Allow-Origin", "*");
     res.json(JSON.stringify(returnData));
     res.end();
   });
 }
 
-module.exports = { uploadFile };
+export { uploadFile };
