@@ -26,7 +26,6 @@ async function uploadFile(file) {
   const s3Params = {
     Bucket: bucketName,
     Body: fileStream,
-    ACL: "public-read",
     Key: key,
   };
 

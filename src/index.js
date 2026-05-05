@@ -5,9 +5,44 @@ import indexRouter from "./routes.js";
 
 const app = express();
 
+// Load environment variables
+import dotenv from "dotenv";
+dotenv.config();
+
+// Basic Auth Middleware
+const ACCESS_KEY = process.env.ACCESS_KEY || "Cfb123";
+
+function requireAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  
+  if (!authHeader || !authHeader.startsWith('Basic ')) {
+    res.setHeader('WWW-Authenticate', 'Basic realm="Upload API"');
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  
+  const base64Credentials = authHeader.split(' ')[1];
+  const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
+  const [username, key] = credentials.split(':');
+  
+  if (key !== ACCESS_KEY) {
+    return res.status(403).json({ error: "Forbidden: Invalid key" });
+  }
+  
+  next();
+}
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(path.dirname(new URL(import.meta.url).pathname), "public")));
+
+// Apply auth to all routes except GET /
+app.use((req, res, next) => {
+  if (req.method === 'GET' && req.path === '/') {
+    return next();
+  }
+  requireAuth(req, res, next);
+});
+
 app.use("/", indexRouter);
 
 import cors from "cors";
