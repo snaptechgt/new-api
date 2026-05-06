@@ -54,7 +54,7 @@ async function uploadPDF(file) {
     Body: fileStream,
     Key: key,
     ContentType: 'application/pdf',
-    ACL: 'public-read', // Make PDF publicly accessible
+    ACL: 'public-read',
   };
 
   console.log(s3Params);
@@ -70,6 +70,35 @@ async function uploadPDF(file) {
     throw err;
   }
 }
+
+// UPLOAD VIDEO TO S3
+async function uploadVideo(file) {
+  const fileStream = fs.createReadStream(file.path);
+  const fileName = file.filename;
+  const key = "videos/" + fileName;
+
+  const contentType = file.mimetype || 'video/mp4';
+
+  const s3Params = {
+    Bucket: bucketName,
+    Body: fileStream,
+    Key: key,
+    ContentType: contentType,
+    ACL: 'public-read',
+  };
+
+  console.log(s3Params);
+
+  try {
+    await s3Client.send(new PutObjectCommand(s3Params));
+    return {
+      url: "https://" + bucketName + ".s3.amazonaws.com/" + key,
+      fileName: file.originalname,
+    };
+  } catch (err) {
+    console.log(err);
+    throw err;
+  }
 }
 
-export { uploadFile, uploadPDF };
+export { uploadFile, uploadPDF, uploadVideo };

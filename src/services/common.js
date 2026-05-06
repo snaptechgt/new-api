@@ -11,6 +11,11 @@ if (!fs.existsSync(pdfDir)) {
   fs.mkdirSync(pdfDir, { recursive: true });
 }
 
+const videoDir = "./public/videos";
+if (!fs.existsSync(videoDir)) {
+  fs.mkdirSync(videoDir, { recursive: true });
+}
+
 const fileStorageEngine = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, imageDir);
@@ -42,4 +47,23 @@ const uploadPDF = multer({
   }
 });
 
-export { uploadImage, uploadPDF };
+const uploadVideo = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, videoDir);
+    },
+    filename: (req, file, cb) => {
+      cb(null, Date.now() + "-" + file.originalname);
+    },
+  }),
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['video/webm', 'video/mp4', 'video/x-matroska'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only MP4 and WebM video files are allowed'));
+    }
+  }
+});
+
+export { uploadImage, uploadPDF, uploadVideo };
