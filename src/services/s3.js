@@ -27,6 +27,7 @@ async function uploadFile(file) {
     Bucket: bucketName,
     Body: fileStream,
     Key: key,
+    ACL: 'public-read', // Make images publicly accessible
   };
 
   console.log(s3Params);
@@ -53,6 +54,7 @@ async function uploadPDF(file) {
     Body: fileStream,
     Key: key,
     ContentType: 'application/pdf',
+    ACL: 'public-read', // Make PDF publicly accessible
   };
 
   console.log(s3Params);
@@ -62,12 +64,12 @@ async function uploadPDF(file) {
     return {
       url: "https://" + bucketName + ".s3.amazonaws.com/" + key,
       fileName: file.originalname,
-      fileSize: file.size,
     };
   } catch (err) {
     console.log(err);
     throw err;
   }
+}
 }
 
 export { uploadFile, uploadPDF };
