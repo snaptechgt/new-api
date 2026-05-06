@@ -12,7 +12,7 @@ dotenv.config();
 // CORS configuration - must be before auth middleware
 import cors from "cors";
 const corsOptions = {
-  origin: ['http://localhost:5173', 'https://new-api-r82n.onrender.com'],
+  origin: ['http://localhost:5173', 'https://new-api-r82n.onrender.com', 'https://cfb-proyecta.onrender.com'],
   credentials: true,
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
