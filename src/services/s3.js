@@ -42,4 +42,32 @@ async function uploadFile(file) {
   }
 }
 
-export { uploadFile };
+// UPLOAD PDF TO S3
+async function uploadPDF(file) {
+  const fileStream = fs.createReadStream(file.path);
+  const fileName = file.filename;
+  const key = "pdfs/" + fileName;
+
+  const s3Params = {
+    Bucket: bucketName,
+    Body: fileStream,
+    Key: key,
+    ContentType: 'application/pdf',
+  };
+
+  console.log(s3Params);
+
+  try {
+    await s3Client.send(new PutObjectCommand(s3Params));
+    return {
+      url: "https://" + bucketName + ".s3.amazonaws.com/" + key,
+      fileName: file.originalname,
+      fileSize: file.size,
+    };
+  } catch (err) {
+    console.log(err);
+    throw err;
+  }
+}
+
+export { uploadFile, uploadPDF };
