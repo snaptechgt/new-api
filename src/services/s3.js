@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import fs from "fs";
 import dotenv from "dotenv";
 
@@ -101,4 +101,16 @@ async function uploadVideo(file) {
   }
 }
 
-export { uploadFile, uploadPDF, uploadVideo };
+// export { uploadFile, uploadPDF, uploadVideo };
+
+// STREAM AN OBJECT FROM S3 (used to serve assets with CORS so the browser
+// can draw them on a canvas without tainting it). The public S3 bucket has no
+// CORS configuration, so serving through this backend (which has CORS enabled
+// for the app origin) makes cross-origin canvas reads work.
+async function streamObject({ key }) {
+  const command = new GetObjectCommand({ Bucket: bucketName, Key: key });
+  const { Body, ContentType, ContentLength } = await s3Client.send(command);
+  return { stream: Body, contentType: ContentType || 'application/octet-stream', contentLength: ContentLength };
+}
+
+export { uploadFile, uploadPDF, uploadVideo, streamObject };

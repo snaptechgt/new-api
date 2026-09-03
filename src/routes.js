@@ -1,5 +1,6 @@
 import express from "express";
 import { uploadFile, uploadPDF, uploadVideo } from "./services/s3.js";
+import { streamObject } from "./services/s3.js";
 import { uploadImage, uploadPDF as uploadPDFMiddleware, uploadVideo as uploadVideoMiddleware } from "./services/common.js";
 import fs from "fs";
 import { unlink } from "fs/promises";
@@ -7,6 +8,27 @@ import { unlink } from "fs/promises";
 const routes = express.Router();
 
 routes.get("/", (req, res) => res.json({ status: "Server running." }));
+
+// GET asset from S3 with CORS — streams the object back so both <img> display
+// and canvas export work from a cross-origin S3 bucket that has no CORS config.
+// Auth is skipped for GET on this route so the app can load it directly.
+routes.get("/asset/:type/:key(*)", async (req, res) => {
+  try {
+    const { type, key } = req.params;
+    const allowed = ["img", "videos", "pdfs"];
+    if (!allowed.includes(type)) return res.status(400).json({ error: "Invalid asset type" });
+    const s3Key = type + "/" + key;
+    const { stream, contentType, contentLength } = await streamObject({ key: s3Key });
+    res.setHeader("Content-Type", contentType);
+    if (contentLength) res.setHeader("Content-Length", contentLength);
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    stream.pipe(res);
+  } catch (err) {
+    console.error(err);
+    res.status(404).json({ error: "Asset not found" });
+  }
+});
 
 routes.post("/single", uploadImage.single("image"), async (req, res) => {
   if (req.file !== undefined) {

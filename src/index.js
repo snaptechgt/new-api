@@ -25,12 +25,12 @@ app.options('*', cors(corsOptions)); // Handle preflight requests
 const ACCESS_KEY = process.env.ACCESS_KEY || "Cfb123";
 
 function requireAuth(req, res, next) {
-  // Skip auth for GET / and OPTIONS requests
+  // Skip auth for GET /, GET /asset/*, and OPTIONS requests
   if (req.method === 'OPTIONS') {
     return next();
   }
   
-  if (req.method === 'GET' && req.path === '/') {
+  if (req.method === 'GET' && (req.path === '/' || req.path.startsWith('/asset/'))) {
     return next();
   }
   
@@ -56,9 +56,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(path.dirname(new URL(import.meta.url).pathname), "public")));
 
-// Apply auth to all routes except GET / and OPTIONS
+// Apply auth to all routes except GET /, GET /asset/*, and OPTIONS
 app.use((req, res, next) => {
-  if (req.method === 'GET' && req.path === '/') {
+  if (req.method === 'GET' && (req.path === '/' || req.path.startsWith('/asset/'))) {
     return next();
   }
   if (req.method === 'OPTIONS') {
