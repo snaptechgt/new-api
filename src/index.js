@@ -9,6 +9,9 @@ const app = express();
 import dotenv from "dotenv";
 dotenv.config();
 
+// Set view engine for error rendering
+app.set('view engine', 'ejs');
+
 // CORS configuration - must be before auth middleware
 import cors from "cors";
 const corsOptions = {
