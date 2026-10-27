@@ -150,9 +150,18 @@ export async function handler(req, res) {
   console.log('   Body html length:', req.body?.html?.length || 0);
 
   try {
-    // Use Iglesia CFB as the display name for the from address
-    // This will change the sender name from 'AgentMail' to 'Iglesia CFB'
-    const from = req.body.from || 'Iglesia CFB <gustavoandres-8136@agentmail.to>';
+    // Transform from address to use 'Iglesia CFB' as display name
+    // This changes the sender name from whatever (e.g., 'no-reply') to 'Iglesia CFB'
+    let from = req.body.from || 'Iglesia CFB <gustavoandres-8136@agentmail.to>';
+    // Ensure from has proper format: 'Name <email>' or just 'email'
+    if (from && !from.includes('<') && !from.includes('Iglesia CFB')) {
+      // If from is just an email without a name, prepend Iglesia CFB
+      from = `Iglesia CFB <${from}>`;
+    } else if (from && from.includes('<') && !from.includes('Iglesia CFB')) {
+      // If from has a different name, replace it with Iglesia CFB
+      const nameEmail = from;
+      from = `Iglesia CFB ${nameEmail.substring(nameEmail.indexOf('<'))`;
+    }
     const { to, subject, html } = req.body;
 
     if (!to || !subject || !html) {
