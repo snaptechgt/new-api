@@ -9,11 +9,11 @@ import { handler as emailHandler } from "./services/email.js";
 const routes = express.Router();
 
 // Email sending endpoint (server-side AgentMail)
-// POST /v2/send/mail
+// POST /email/send
 // Body: { from, to, subject, html }
-routes.post("/v2/send/mail", async (req, res) => {
+routes.post("/email/send", async (req, res) => {
   try {
-    console.log('POST /v2/send/mail received');
+    console.log('POST /email/send received');
     const result = await emailHandler(req, res);
     console.log('emailHandler result:', result);
 
@@ -40,7 +40,7 @@ routes.post("/v2/send/mail", async (req, res) => {
     console.warn('Unexpected emailHandler result format:', result);
     return res.status(500).json({ error: 'Error inesperado en el procesamiento del email' });
   } catch (error) {
-    console.error('Error in /v2/send/mail route:', error);
+    console.error('Error in /email/send route:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
