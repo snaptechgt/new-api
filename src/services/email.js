@@ -15,17 +15,20 @@ try {
 
   if (!key) {
     initError = new Error('AGENTMAIL_API_KEY environment variable is not set');
-    console.error('AgentMail init error: AGENTMAIL_API_KEY not configured');
+    console.error('❌ AgentMail init error: AGENTMAIL_API_KEY not configured');
+    console.log('✅ Available env vars:', Object.keys(process.env).filter(k => k.startsWith('AGENTMAIL') || k.startsWith('RESEND')).join(', '));
   } else if (key.startsWith('am_') || key.length > 10) {
     // Looks like a valid AgentMail key format
     client = key;
+    console.log('✅ AgentMail client initialized with key starting with: am_');
   } else {
     initError = new Error('AGENTMAIL_API_KEY appears invalid: ' + key.substring(0, 10) + '...');
-    console.error('AgentMail init error: Invalid API key format', key.substring(0, 10) + '...');
+    console.error('❌ AgentMail init error: Invalid API key format', key.substring(0, 10) + '...');
+    console.log('✅ Key value (first 20 chars):', key.substring(0, 20));
   }
 } catch (error) {
   initError = error;
-  console.error('AgentMail initialization error:', error);
+  console.error('❌ AgentMail initialization error:', error);
   client = null;
 }
 
@@ -53,34 +56,54 @@ function getInitError() {
  * @returns {Promise<object>} - Result with success flag and data or error
  */
 export async function sendEmail(email) {
+  console.log('📧 sendEmail called with:');
+  console.log('   - from:', email.from);
+  console.log('   - to:', email.to);
+  console.log('   - subject:', email.subject);
+  console.log('   - html length:', email.html?.length || 0, 'chars');
+
   if (!isAgentMailReady()) {
-    return { success: false, error: 'AgentMail client not initialized. ' + (getInitError()?.message || 'Missing AGENTMAIL_API_KEY') };
+    const errMsg = 'AgentMail client not initialized. ' + (getInitError()?.message || 'Missing AGENTMAIL_API_KEY');
+    console.error('❌', errMsg);
+    return { success: false, error: errMsg };
   }
 
+  console.log('🚀 Sending to AgentMail API: https://api.agentmail.to/v1/emails');
+
   try {
+    const requestBody = {
+      from: email.from,
+      to: Array.isArray(email.to) ? email.to : [email.to],
+      subject: email.subject,
+      html: email.html,
+    };
+    console.log('📦 Request body to AgentMail:', JSON.stringify(requestBody, null, 2));
+
     const result = await fetch('https://api.agentmail.to/v1/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${client}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from: email.from,
-        to: Array.isArray(email.to) ? email.to : [email.to],
-        subject: email.subject,
-        html: email.html,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     const data = await result.json();
+    console.log('📥 AgentMail API response status:', result.status);
+    console.log('📥 AgentMail API response data:', JSON.stringify(data, null, 2));
 
     if (!result.ok) {
-      return { success: false, data: null, error: data?.message || 'Error en API de AgentMail' };
+      const errMsg = data?.message || 'Error en API de AgentMail';
+      console.error('❌ AgentMail API error:', errMsg);
+      console.error('❌ AgentMail response full:', data);
+      return { success: false, data: null, error: errMsg };
     }
 
+    console.log('✅ AgentMail API success, returning data');
     return { success: true, data };
   } catch (err) {
-    console.error('Error sending email via AgentMail:', err);
+    console.error('❌ Error sending email via AgentMail:', err);
+    console.error('❌ Error full:', err);
     return { success: false, data: null, error: err?.message || 'Error inesperado al enviar email' };
   }
 }
@@ -88,23 +111,40 @@ export async function sendEmail(email) {
 // Wrapper for the Express route - validates input and calls sendEmail (does NOT send response)
 // The routes.js handler is responsible for sending the response
 export async function handler(req, res) {
+  console.log('📥 /email/send handler called with body:');
+  console.log('   Body keys:', Object.keys(req.body || {}));
+  console.log('   Body from:', req.body?.from);
+  console.log('   Body to:', req.body?.to);
+  console.log('   Body subject:', req.body?.subject);
+  console.log('   Body html length:', req.body?.html?.length || 0);
+
   try {
     const { to, subject, html, from } = req.body;
 
     if (!to || !subject || !html || !from) {
-      // Return error result without sending response (routes.js will handle it)
-      return { success: false, error: 'Faltan campos obligatorios: to, subject, html, from' };
+      const missing = [];
+      if (!to) missing.push('to');
+      if (!subject) missing.push('subject');
+      if (!html) missing.push('html');
+      if (!from) missing.push('from');
+      console.error('❌ Missing fields:', missing);
+      return { success: false, error: 'Faltan campos obligatorios: ' + missing.join(', ') };
     }
 
+    console.log('✅ All fields present, calling sendEmail');
+
     const result = await sendEmail({ from, to, subject, html });
+    console.log('📤 sendEmail result:', result);
 
     if (result.success) {
       return { success: true, data: result.data };
     } else {
+      console.error('❌ sendEmail has error:', result.error);
       return { success: false, error: result.error };
     }
   } catch (error) {
-    console.error('Error in email handler:', error);
+    console.error('❌ Error in email handler:', error);
+    console.error('❌ Error full stack:', error);
     return { success: false, error: 'Error inesperado al enviar email' };
   }
 }

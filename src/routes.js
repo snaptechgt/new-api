@@ -13,34 +13,43 @@ const routes = express.Router();
 // Body: { from, to, subject, html }
 routes.post("/email/send", async (req, res) => {
   try {
-    console.log('POST /email/send received');
+    console.log('📥 /email/send route invoked');
+    console.log('📦 Request body keys:', Object.keys(req.body || {}));
+    console.log('📤 Request body from:', req.body?.from);
+    console.log('📤 Request body to:', req.body?.to);
+    console.log('📤 Request body subject:', req.body?.subject);
+    console.log('📤 Request body html length:', req.body?.html?.length || 0, 'chars');
+
     const result = await emailHandler(req, res);
-    console.log('emailHandler result:', result);
+    console.log('📥 emailHandler result:', result);
 
     if (result === null || result === undefined) {
+      console.error('❌ emailHandler returned null/undefined');
       return res.status(500).json({ error: 'Error: emailHandler returned null/undefined' });
     }
 
     if (typeof result !== 'object') {
+      console.error('❌ emailHandler returned invalid type:', typeof result);
       return res.status(500).json({ error: 'Error: emailHandler returned invalid type' });
     }
 
     if ('error' in result && result.error) {
       const status = result.status || 500;
-      console.error('emailHandler has error:', result.error);
+      console.error('❌ emailHandler has error:', result.error);
       return res.status(status).json({ error: result.error });
     }
 
     if ('success' in result && result.success === true) {
-      console.log('emailHandler success, sending response');
+      console.log('✅ emailHandler success, sending response');
       return res.json({ success: true, data: result.data });
     }
 
     // Fallback for unexpected result format
-    console.warn('Unexpected emailHandler result format:', result);
+    console.warn('⚠️ Unexpected emailHandler result format:', result);
     return res.status(500).json({ error: 'Error inesperado en el procesamiento del email' });
   } catch (error) {
-    console.error('Error in /email/send route:', error);
+    console.error('❌ Error in /email/send route:', error);
+    console.error('❌ Error full:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
