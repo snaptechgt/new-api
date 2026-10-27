@@ -69,29 +69,33 @@ export async function sendEmail(email) {
   }
 
   try {
-    // AgentMail API structure per quickstart docs:
-    // 1. Create inbox: POST /inboxes (with client_id header for safe retries)
-    //    curl -X POST https://api.agentmail.to/inboxes \
-    //      -H "Authorization: Bearer $AGENTMAIL_API_KEY" \
-    //      -H "Content-Type: application/json" \
-    //      -d '{"client_id": "my-agent-inbox-v1"}'
-    //    Returns: { inbox_id, ... }
-    //
-    // 2. Send message: POST /inboxes/{inbox_id}/messages/send
-    //    curl -X POST https://api.agentmail.to/inboxes/<inbox_id>/messages/send \
-    //      -H "Authorization: Bearer $AGENTMAIL_API_KEY" \
-    //      -H "Content-Type: application/json" \
-    //      -d '{"to": "recipient@example.com", "subject": "Hello", "text": "Body"}'
-    //
-    // For this integration, we'll use the /emails endpoint which should work
-    // with a properly configured API key and verified inbox.
-    // If /v1/emails returns 404, the proper flow is to create an inbox first.
+    // Step 1: List available inboxes for this API key
+    // Per AgentMail docs, the list endpoint returns only inboxes visible to the credential
+    console.log('📋 Listing available inboxes...');
+    const inboxesResult = await fetch('https://api.agentmail.to/inboxes', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${client}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
-    // Send email using existing inbox per AgentMail quickstart
-    // User has inbox: gustavoandres-8136@agentmail.to
-    // Inbox ID is: gustavoandres-8136
-    // Send message: POST /inboxes/{inbox_id}/messages/send
-    const inboxId = 'gustavoandres-8136';
+    const inboxesData = await inboxesResult.json();
+    console.log('📥 AgentMail inboxes response status:', inboxesResult.status);
+    console.log('📥 Available inboxes:', JSON.stringify(inboxesData, null, 2));
+
+    if (!inboxesData || !inboxesData.data || inboxesData.data.length === 0) {
+      const errMsg = 'No inboxes found for this AgentMail API key. Please ensure the key has inbox access or create an inbox first.';
+      console.error('❌', errMsg);
+      return { success: false, error: errMsg };
+    }
+
+    // Use the first available inbox
+    const inboxId = inboxesData.data[0].inbox_id || inboxesData.data[0].id;
+    console.log('✅ Using inbox ID:', inboxId);
+
+    // Step 2: Send message to the inbox
+    // POST /inboxes/{inbox_id}/messages/send
     const result = await fetch(`https://api.agentmail.to/inboxes/${inboxId}/messages/send`, {
       method: 'POST',
       headers: {
@@ -114,12 +118,12 @@ export async function sendEmail(email) {
       console.error('❌ AgentMail API error:', errMsg);
       console.error('❌ AgentMail response full:', data);
 
-      // If Route not found error, provide guidance
-      if (errMsg && errMsg.includes('Route not found')) {
-        console.error('💡 Fix: The /v1/emails endpoint may not be supported.');
-        console.error('💡 Per AgentMail docs, use inbox-based flow:');
-        console.error('   1. Create inbox: POST /inboxes with client_id header');
-        console.error('   2. Send message: POST /inboxes/{inbox_id}/messages/send');
+      // If Inbox not found error, provide guidance
+      if (errMsg && errMsg.includes('Inbox not found')) {
+        console.error('💡 Fix: The current API key does not have access to the inbox.');
+        console.error('💡 Available inboxes were listed above. Use one of those, or:');
+        console.error('   1. Create a new inbox: POST /inboxes with client_id header');
+        console.error('   2. Ensure the API key has proper permissions');
       }
 
       return { success: false, data: null, error: errMsg };
