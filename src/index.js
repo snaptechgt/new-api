@@ -61,16 +61,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(path.dirname(new URL(import.meta.url).pathname), "public")));
 
-// Apply auth to all routes except GET /, GET /asset/*, and OPTIONS
-app.use((req, res, next) => {
-  if (req.method === 'GET' && (req.path === '/' || req.path.startsWith('/asset/'))) {
-    return next();
-  }
-  if (req.method === 'OPTIONS') {
-    return next();
-  }
-  requireAuth(req, res, next);
-});
+// Auth temporarily disabled for all routes
+// Uncomment the requireAuth line below if you want to re-enable auth
+// app.use((req, res, next) => {
+//   if (req.method === 'GET' && (req.path === '/' || req.path.startsWith('/asset/'))) {
+//     return next();
+//   }
+//   if (req.method === 'OPTIONS') {
+//     return next();
+//   }
+//   requireAuth(req, res, next);
+// });
+// All routes are now public - no auth header required
 
 app.use("/", indexRouter);
 
