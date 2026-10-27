@@ -20,7 +20,7 @@ const corsOptions = {
   origin: ['http://localhost:5173', 'https://new-api-r82n.onrender.com', 'https://cfb-proyecta.onrender.com', 'https://cfb-dashboard-xk8f.onrender.com'],
   credentials: true,
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Accept-Language']
 };
 
 app.use(cors(corsOptions));
