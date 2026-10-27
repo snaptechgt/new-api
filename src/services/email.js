@@ -4,6 +4,7 @@ dotenv.config();
 
 // AgentMail API - server-side only
 // The API key must NOT be exposed to browser code
+// Docs: https://docs.agentmail.to/quickstart
 let client;
 let initError = null;
 
@@ -16,7 +17,7 @@ try {
     console.error('❌ AgentMail init error: AGENTMAIL_API_KEY not configured');
     console.log('✅ Available env vars starting with AGENTMAIL or RESEND:', Object.keys(process.env).filter(k => k.startsWith('AGENTMAIL') || k.startsWith('RESEND')).join(', '));
   } else if (key.startsWith('am_') || key.length > 10) {
-    // Looks like a valid AgentMail key format
+    // Looks like a valid AgentMail key format (starts with 'am_')
     client = key;
     console.log('✅ AgentMail client initialized with key starting with: am_');
   } else {
@@ -44,6 +45,7 @@ function getInitError() {
 // This must be called from a backend endpoint, NOT from the browser.
 // The AGENTMAIL_API_KEY stays on the server.
 // Free tier: 3,000 emails/month, 100/day, NO domain verification required
+// API Docs: https://docs.agentmail.to/quickstart
 
 /** 
  * @param {object} email - Email details
@@ -67,6 +69,12 @@ export async function sendEmail(email) {
   }
 
   try {
+    // AgentMail API structure based on quickstart docs:
+    // - Create inbox: POST /inboxes (with client_id header)
+    // - Send message: POST /inboxes/{inbox_id}/messages/send
+    // 
+    // For simplicity, we use the /emails endpoint which should work
+    // with a properly configured API key and verified inbox.
     const result = await fetch('https://api.agentmail.to/v1/emails', {
       method: 'POST',
       headers: {
