@@ -81,8 +81,8 @@ export async function handler(req, res) {
   try {
     const { to, subject, html, from } = req.body;
 
-    if (!to || !subject || !html) {
-      return res.status(400).json({ error: 'Faltan campos obligatorios: to, subject, html' });
+    if (!to || !subject || !html || !from) {
+      return res.status(400).json({ error: 'Faltan campos obligatorios: to, subject, html, from' });
     }
 
     const result = await sendEmail({ from, to, subject, html });
