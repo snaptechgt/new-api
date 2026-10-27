@@ -84,14 +84,15 @@ export async function sendEmail(email) {
     console.log('📥 AgentMail inboxes response status:', inboxesResult.status);
     console.log('📥 Available inboxes:', JSON.stringify(inboxesData, null, 2));
 
-    if (!inboxesData || !inboxesData.data || inboxesData.data.length === 0) {
+    if (!inboxesData || !inboxesData.inboxes || inboxesData.inboxes.length === 0) {
       const errMsg = 'No inboxes found for this AgentMail API key. Please ensure the key has inbox access or create an inbox first.';
       console.error('❌', errMsg);
       return { success: false, error: errMsg };
     }
 
     // Use the first available inbox
-    const inboxId = inboxesData.data[0].inbox_id || inboxesData.data[0].id;
+    // API response format: { count: number, inboxes: [{ inbox_id, email, ... }] }
+    const inboxId = inboxesData.inboxes[0].inbox_id || inboxesData.inboxes[0].id;
     console.log('✅ Using inbox ID:', inboxId);
 
     // Step 2: Send message to the inbox
