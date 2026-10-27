@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= message %></title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+    .error-container { border: 1px solid #ddd; padding: 20px; border-radius: 8px; background: #fafafa; }
+    .error-code { font-size: 6rem; color: #e6e0d5; margin: 20px 0; }
+    .back-link { margin-top: 20px; display: inline-block; color: #292a24; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="error-container">
+    <div class="error-code"><%= statusCode %></div>
+    <h2><%= message %></h2>
+    <p>Something went wrong on our end. Please try again later.</p>
+    <a class="back-link" href="/">Go back home</a>
+  </div>
+</body>
+</html>

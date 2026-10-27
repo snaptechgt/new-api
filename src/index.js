@@ -11,6 +11,8 @@ dotenv.config();
 
 // Set view engine for error rendering
 app.set('view engine', 'ejs');
+const viewsPath = path.join(path.dirname(new URL(import.meta.url).pathname), 'views');
+app.set('views', viewsPath);
 
 // CORS configuration - must be before auth middleware
 import cors from "cors";
@@ -85,7 +87,7 @@ app.use(function (err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
-  res.render("error");
+  res.render("error", { statusCode: err.status || 500 });
 });
 
 const port = process.env.PORT || 5000;
