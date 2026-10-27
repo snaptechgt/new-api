@@ -4,14 +4,46 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Initialize Resend client server-side only
-// The API key must NOT be exposed to the browser
+// The API key MUST be set as environment variable RESEND_API_KEY
+// Never expose this to browser code
 let resend;
+let resendInitError = null;
 
+// Try to initialize Resend client
 try {
-  resend = new Resend(process.env.RESEND_API_KEY);
+  const key = process.env.RESEND_API_KEY;
+  
+  // Log initialization status (won't expose key in logs)
+  if (!key) {
+    resendInitError = new Error('RESEND_API_KEY environment variable is not set');
+    console.error('Resend init error: RESEND_API_KEY not configured');
+  } else if (key.startsWith('re_') || key.length > 20) {
+    // Looks like a valid Resend key format
+    resend = new Resend(key);
+  } else {
+    resendInitError = new Error(`RESEND_API_KEY appears invalid: ${key.substring(0, 10)}...`);
+    console.error('Resend init error: Invalid API key format', key.substring(0, 10) + '...');
+  }
 } catch (error) {
+  resendInitError = error;
   console.error('Resend initialization error:', error);
   resend = null;
+}
+
+/**
+ * Check if Resend is initialized
+ * @returns {boolean} true if Resend client is ready to use
+ */
+export function isResendReady(): boolean {
+  return resend !== null;
+}
+
+/**
+ * Get the initialization error if any
+ * @returns {Error | null} error object or null if no error
+ */
+export function getInitError(): Error | null {
+  return resendInitError;
 }
 
 /**
@@ -29,7 +61,7 @@ try {
  */
 export async function sendEmail(email) {
   if (!resend) {
-    return { success: false, error: 'Resend client not initialized - missing RESEND_API_KEY' };
+    return { success: false, error: 'Resend client not initialized. ' + (resendInitError?.message || 'Missing RESEND_API_KEY') };
   }
 
   try {
@@ -75,4 +107,4 @@ export async function handler(req, res) {
   }
 }
 
-export default { sendEmail, handler };
+export default { sendEmail, handler, isResendReady, getInitError };
