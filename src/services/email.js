@@ -85,25 +85,27 @@ export async function sendEmail(email) {
   }
 }
 
-// Wrapper for the Express route - validates input and calls sendEmail
+// Wrapper for the Express route - validates input and calls sendEmail (does NOT send response)
+// The routes.js handler is responsible for sending the response
 export async function handler(req, res) {
   try {
     const { to, subject, html, from } = req.body;
 
     if (!to || !subject || !html || !from) {
-      return res.status(400).json({ error: 'Faltan campos obligatorios: to, subject, html, from' });
+      // Return error result without sending response (routes.js will handle it)
+      return { success: false, error: 'Faltan campos obligatorios: to, subject, html, from' };
     }
 
     const result = await sendEmail({ from, to, subject, html });
 
     if (result.success) {
-      return res.json(result);
+      return { success: true, data: result.data };
     } else {
-      return res.status(500).json(result);
+      return { success: false, error: result.error };
     }
   } catch (error) {
     console.error('Error in email handler:', error);
-    return res.status(500).json({ error: 'Error interno del servidor' });
+    return { success: false, error: 'Error inesperado al enviar email' };
   }
 }
 
