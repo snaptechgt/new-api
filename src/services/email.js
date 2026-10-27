@@ -2,39 +2,40 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// AgentMail API - Free tier: 3,000 emails/month, 100/day, no domain verification required
-// Free tier does not require verified domains like Resend
-// API KEY must be set as environment variable AGENTMAIL_API_KEY
-// Never expose this to browser code
-let client;
+// AgentMail SDK - use official agentmail npm package
+// https://www.npmjs.com/package/agentmail
+// Docs: https://github.com/agentmail-to/agentmail-node
+
+// Initialize AgentMail SDK client (server-side only)
+// The API key must NOT be exposed to browser code
+let agentMailClient;
 let initError = null;
 
-// Try to initialize AgentMail client
+// Try to initialize AgentMail SDK client
 try {
+  const agentmail = require('agentmail');
   const key = process.env.AGENTMAIL_API_KEY;
 
   if (!key) {
     initError = new Error('AGENTMAIL_API_KEY environment variable is not set');
-    console.error('❌ AgentMail init error: AGENTMAIL_API_KEY not configured');
-    console.log('✅ Available env vars:', Object.keys(process.env).filter(k => k.startsWith('AGENTMAIL') || k.startsWith('RESEND')).join(', '));
+    console.error('❌ AgentMail SDK init error: AGENTMAIL_API_KEY not configured');
   } else if (key.startsWith('am_') || key.length > 10) {
     // Looks like a valid AgentMail key format
-    client = key;
-    console.log('✅ AgentMail client initialized with key starting with: am_');
+    agentMailClient = agentmail(key);
+    console.log('✅ AgentMail SDK client initialized');
   } else {
     initError = new Error('AGENTMAIL_API_KEY appears invalid: ' + key.substring(0, 10) + '...');
-    console.error('❌ AgentMail init error: Invalid API key format', key.substring(0, 10) + '...');
-    console.log('✅ Key value (first 20 chars):', key.substring(0, 20));
+    console.error('❌ AgentMail SDK init error: Invalid API key format', key.substring(0, 10) + '...');
   }
 } catch (error) {
   initError = error;
-  console.error('❌ AgentMail initialization error:', error);
-  client = null;
+  console.error('❌ AgentMail SDK initialization error:', error);
+  agentMailClient = null;
 }
 
-// Check if AgentMail is initialized
+// Check if AgentMail SDK is initialized
 function isAgentMailReady() {
-  return client !== null;
+  return agentMailClient !== null;
 }
 
 // Get the initialization error if any
@@ -42,11 +43,11 @@ function getInitError() {
   return initError;
 }
 
-// Send newsletter/email via AgentMail API (server-side only)
+// Send newsletter/email via AgentMail SDK (server-side only)
 // This must be called from a backend endpoint, NOT from the browser.
 // The AGENTMAIL_API_KEY stays on the server.
 // Free tier: 3,000 emails/month, 100/day, NO domain verification required
-// API Docs: https://docs.agentmail.to/welcome
+// API Docs: https://github.com/agentmail-to/agentmail-node
 
 /**
  * @param {object} email - Email details
@@ -64,48 +65,26 @@ export async function sendEmail(email) {
   console.log('   - html length:', email.html?.length || 0, 'chars');
 
   if (!isAgentMailReady()) {
-    const errMsg = 'AgentMail client not initialized. ' + (getInitError()?.message || 'Missing AGENTMAIL_API_KEY');
+    const errMsg = 'AgentMail SDK client not initialized. ' + (getInitError()?.message || 'Missing AGENTMAIL_API_KEY');
     console.error('❌', errMsg);
     return { success: false, error: errMsg };
   }
 
-  // https://docs.agentmail.to/welcome - use the correct endpoint
-  const AGENTMAIL_ENDPOINT = 'https://api.agentmail.to/v1/emails';
-  console.log('🚀 Sending to AgentMail API:', AGENTMAIL_ENDPOINT);
-
   try {
-    const requestBody = {
-      from: email.from,
-      to: Array.isArray(email.to) ? email.to : [email.to],
-      subject: email.subject,
-      html: email.html,
-    };
-    console.log('📦 Request body to AgentMail:', JSON.stringify(requestBody, null, 2));
+    // Use AgentMail SDK to send email
+    // The SDK handles the correct API endpoint and method
+    const result = await agentMailClient.send({ from: email.from, to: email.to, subject: email.subject, html: email.html });
+    console.log('✅ AgentMail SDK send result:', result);
 
-    const result = await fetch(AGENTMAIL_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${client}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    const data = await result.json();
-    console.log('📥 AgentMail API response status:', result.status);
-    console.log('📥 AgentMail API response data:', JSON.stringify(data, null, 2));
-
-    if (!result.ok) {
-      const errMsg = data?.message || 'Error en API de AgentMail';
-      console.error('❌ AgentMail API error:', errMsg);
-      console.error('❌ AgentMail response full:', data);
-      return { success: false, data: null, error: errMsg };
+    if (result && result.success) {
+      return { success: true, data: result };
+    } else {
+      const errMsg = result?.error || 'Unknown error from AgentMail SDK';
+      console.error('❌ AgentMail SDK error:', errMsg);
+      return { success: false, error: errMsg };
     }
-
-    console.log('✅ AgentMail API success, returning data');
-    return { success: true, data };
   } catch (err) {
-    console.error('❌ Error sending email via AgentMail:', err);
+    console.error('❌ Error sending email via AgentMail SDK:', err);
     console.error('❌ Error full:', err);
     return { success: false, data: null, error: err?.message || 'Error inesperado al enviar email' };
   }
