@@ -1,78 +1,87 @@
-import { Resend } from 'resend';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Initialize Resend client server-side only
-// The API key MUST be set as environment variable RESEND_API_KEY
+// AgentMail API - Free tier: 3,000 emails/month, 100/day, no domain verification required
+// Free tier does not require verified domains like Resend
+// API KEY must be set as environment variable AGENTMAIL_API_KEY
 // Never expose this to browser code
-let resend;
-let resendInitError = null;
+let client;
+let initError = null;
 
-// Try to initialize Resend client
+// Try to initialize AgentMail client
 try {
-  const key = process.env.RESEND_API_KEY;
+  const key = process.env.AGENTMAIL_API_KEY;
 
-  // Log initialization status (won't expose key in logs)
   if (!key) {
-    resendInitError = new Error('RESEND_API_KEY environment variable is not set');
-    console.error('Resend init error: RESEND_API_KEY not configured');
-  } else if (key.startsWith('re_') || key.length > 20) {
-    // Looks like a valid Resend key format
-    resend = new Resend(key);
+    initError = new Error('AGENTMAIL_API_KEY environment variable is not set');
+    console.error('AgentMail init error: AGENTMAIL_API_KEY not configured');
+  } else if (key.startsWith('am_') || key.length > 10) {
+    // Looks like a valid AgentMail key format
+    client = key;
   } else {
-    resendInitError = new Error('RESEND_API_KEY appears invalid: ' + key.substring(0, 10) + '...');
-    console.error('Resend init error: Invalid API key format', key.substring(0, 10) + '...');
+    initError = new Error('AGENTMAIL_API_KEY appears invalid: ' + key.substring(0, 10) + '...');
+    console.error('AgentMail init error: Invalid API key format', key.substring(0, 10) + '...');
   }
 } catch (error) {
-  resendInitError = error;
-  console.error('Resend initialization error:', error);
-  resend = null;
+  initError = error;
+  console.error('AgentMail initialization error:', error);
+  client = null;
 }
 
-// Check if Resend is initialized
-function isResendReady() {
-  return resend !== null;
+// Check if AgentMail is initialized
+function isAgentMailReady() {
+  return client !== null;
 }
 
 // Get the initialization error if any
 function getInitError() {
-  return resendInitError;
+  return initError;
 }
 
-// Send newsletter/email via Resend API (server-side only)
+// Send newsletter/email via AgentMail API (server-side only)
 // This must be called from a backend endpoint, NOT from the browser.
-// The RESEND_API_KEY stays on the server.
+// The AGENTMAIL_API_KEY stays on the server.
+// Free tier: 3,000 emails/month, 100/day, NO domain verification required
 
 /**
  * @param {object} email - Email details
- * @param {string} email.from - Sender address (e.g., 'Iglesia CFB <boletin@news.iglesiacfb.org>')
+ * @param {string} email.from - Sender address (e.g., 'no-reply@cfb.dashboard.com')
  * @param {string|string[]} email.to - Recipient email(s)
  * @param {string} email.subject - Email subject
  * @param {string} email.html - HTML email content
  * @returns {Promise<object>} - Result with success flag and data or error
  */
 export async function sendEmail(email) {
-  if (!resend) {
-    return { success: false, error: 'Resend client not initialized. ' + (resendInitError?.message || 'Missing RESEND_API_KEY') };
+  if (!isAgentMailReady()) {
+    return { success: false, error: 'AgentMail client not initialized. ' + (getInitError()?.message || 'Missing AGENTMAIL_API_KEY') };
   }
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: email.from,
-      to: Array.isArray(email.to) ? email.to : [email.to],
-      subject: email.subject,
-      html: email.html,
+    const result = await fetch('https://api.agentmail.to/v1/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${client}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: email.from,
+        to: Array.isArray(email.to) ? email.to : [email.to],
+        subject: email.subject,
+        html: email.html,
+      }),
     });
 
-    if (error) {
-      return { success: false, error: error.message || 'Error en API de Resend' };
+    const data = await result.json();
+
+    if (!result.ok) {
+      return { success: false, data: null, error: data?.message || 'Error en API de AgentMail' };
     }
 
     return { success: true, data };
   } catch (err) {
-    console.error('Error sending email via Resend:', err);
-    return { success: false, error: err?.message || 'Error inesperado al enviar email' };
+    console.error('Error sending email via AgentMail:', err);
+    return { success: false, data: null, error: err?.message || 'Error inesperado al enviar email' };
   }
 }
 
