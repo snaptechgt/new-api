@@ -18,3 +18,5 @@ services:
         sync: false
       - key: RESEND_API_KEY
         fromSecret: resend_api_key
+  - key: AGENTMAIL_API_KEY
+    fromSecret: agentmail_api_key
