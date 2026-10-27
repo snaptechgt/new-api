@@ -12,7 +12,7 @@ let resendInitError = null;
 // Try to initialize Resend client
 try {
   const key = process.env.RESEND_API_KEY;
-  
+
   // Log initialization status (won't expose key in logs)
   if (!key) {
     resendInitError = new Error('RESEND_API_KEY environment variable is not set');
@@ -21,7 +21,7 @@ try {
     // Looks like a valid Resend key format
     resend = new Resend(key);
   } else {
-    resendInitError = new Error(`RESEND_API_KEY appears invalid: ${key.substring(0, 10)}...`);
+    resendInitError = new Error('RESEND_API_KEY appears invalid: ' + key.substring(0, 10) + '...');
     console.error('Resend init error: Invalid API key format', key.substring(0, 10) + '...');
   }
 } catch (error) {
@@ -30,28 +30,21 @@ try {
   resend = null;
 }
 
-/**
- * Check if Resend is initialized
- * @returns {boolean} true if Resend client is ready to use
- */
-export function isResendReady(): boolean {
+// Check if Resend is initialized
+function isResendReady() {
   return resend !== null;
 }
 
-/**
- * Get the initialization error if any
- * @returns {Error | null} error object or null if no error
- */
-export function getInitError(): Error | null {
+// Get the initialization error if any
+function getInitError() {
   return resendInitError;
 }
 
+// Send newsletter/email via Resend API (server-side only)
+// This must be called from a backend endpoint, NOT from the browser.
+// The RESEND_API_KEY stays on the server.
+
 /**
- * Send newsletter/email via Resend API (server-side only)
- * 
- * This must be called from a backend endpoint, NOT from the browser.
- * The RESEND_API_KEY stays on the server.
- * 
  * @param {object} email - Email details
  * @param {string} email.from - Sender address (e.g., 'Iglesia CFB <boletin@news.iglesiacfb.org>')
  * @param {string|string[]} email.to - Recipient email(s)
@@ -83,10 +76,8 @@ export async function sendEmail(email) {
   }
 }
 
-/**
- * Wrapper for the Express route - validates input and calls sendEmail
- */
-export async function handler(req, res) {
+// Wrapper for the Express route - validates input and calls sendEmail
+export function handler(req, res) {
   try {
     const { to, subject, html, from } = req.body;
 
@@ -107,4 +98,4 @@ export async function handler(req, res) {
   }
 }
 
-export default { sendEmail, handler, isResendReady, getInitError };
+export default { sendEmail, handler };
