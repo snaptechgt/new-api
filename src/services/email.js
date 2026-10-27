@@ -150,14 +150,16 @@ export async function handler(req, res) {
   console.log('   Body html length:', req.body?.html?.length || 0);
 
   try {
-    const { to, subject, html, from } = req.body;
+    // Use Iglesia CFB as the display name for the from address
+    // This will change the sender name from 'AgentMail' to 'Iglesia CFB'
+    const from = req.body.from || 'Iglesia CFB <gustavoandres-8136@agentmail.to>';
+    const { to, subject, html } = req.body;
 
-    if (!to || !subject || !html || !from) {
+    if (!to || !subject || !html) {
       const missing = [];
       if (!to) missing.push('to');
       if (!subject) missing.push('subject');
       if (!html) missing.push('html');
-      if (!from) missing.push('from');
       console.error('❌ Missing fields:', missing);
       return { success: false, error: 'Faltan campos obligatorios: ' + missing.join(', ') };
     }
