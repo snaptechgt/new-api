@@ -8,21 +8,27 @@ import { handler as emailHandler } from "./services/email.js";
 
 const routes = express.Router();
 
-// Email sending endpoint (server-side Resend)
+// Email sending endpoint (server-side AgentMail)
 // POST /v2/send/mail
 // Body: { from, to, subject, html }
 routes.post("/v2/send/mail", async (req, res) => {
   try {
     const result = await emailHandler(req, res);
 
-    // emailHandler now returns a result object instead of sending response
-    if (result && result.error) {
+    if (!result) {
+      return res.status(500).json({ error: 'Error: emailHandler returned null' });
+    }
+
+    if (result.error) {
       const status = result.status || 500;
+      console.error('emailHandler error:', result.error);
       return res.status(status).json({ error: result.error });
     }
+
+    console.log('emailHandler result:', result);
     return res.json({ success: true, data: result });
   } catch (error) {
-    console.error('Error in /email/send route:', error);
+    console.error('Error in /v2/send/mail route:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
