@@ -9,9 +9,9 @@ import { handler as emailHandler } from "./services/email.js";
 const routes = express.Router();
 
 // Email sending endpoint (server-side Resend)
-// POST /api/email/send
-// Body: { to, subject, html, from }
-routes.post("/email/send", async (req, res) => {
+// POST /v2/send/mail
+// Body: { from, to, subject, html }
+routes.post("/v2/send/mail", async (req, res) => {
   try {
     const result = await emailHandler(req, res);
     if (result && result.error) {

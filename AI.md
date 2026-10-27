@@ -37,7 +37,7 @@ npm install
 ```
 Frontend (cfb-dashboard)                new-api (this service)
   │                                       │
-  │   POST /email/send   {to, subject,   │
+  │   POST /v2/send/mail   {to, subject,   │
   │   html}  ──────────────►              │
   │                                       │ AgentMail API
   │   gets JSON response                    │
@@ -53,7 +53,7 @@ Frontend (cfb-dashboard)                new-api (this service)
 
 ### Email (AgentMail)
 
-- **POST /email/send**
+- **POST /v2/send/mail**
   - Body: `{ to, subject, html, from }`
   - Sends email via AgentMail API
   - Requires `AGENTMAIL_API_KEY` in environment
