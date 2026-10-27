@@ -2,18 +2,19 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// AgentMail SDK - use official agentmail npm package
+// AgentMail SDK - use official agentmail npm package (ESM)
 // https://www.npmjs.com/package/agentmail
 // Docs: https://github.com/agentmail-to/agentmail-node
 
-// Initialize AgentMail SDK client (server-side only)
+// Initialize AgentMail SDK client (server-side only, ESM)
 // The API key must NOT be exposed to browser code
 let agentMailClient;
 let initError = null;
 
-// Try to initialize AgentMail SDK client
+// Try to initialize AgentMail SDK client using dynamic import (ESM)
 try {
-  const agentmail = require('agentmail');
+  // eslint-disable-line no-eval
+  const agentmail = await import('agentmail');
   const key = process.env.AGENTMAIL_API_KEY;
 
   if (!key) {
@@ -21,7 +22,8 @@ try {
     console.error('❌ AgentMail SDK init error: AGENTMAIL_API_KEY not configured');
   } else if (key.startsWith('am_') || key.length > 10) {
     // Looks like a valid AgentMail key format
-    agentMailClient = agentmail(key);
+    // The SDK exports either as default or named export
+    agentMailClient = agentmail.default || agentmail;
     console.log('✅ AgentMail SDK client initialized');
   } else {
     initError = new Error('AGENTMAIL_API_KEY appears invalid: ' + key.substring(0, 10) + '...');
@@ -49,7 +51,7 @@ function getInitError() {
 // Free tier: 3,000 emails/month, 100/day, NO domain verification required
 // API Docs: https://github.com/agentmail-to/agentmail-node
 
-/**
+/** 
  * @param {object} email - Email details
  * @param {string} email.from - Sender address (e.g., 'no-reply@cfb.dashboard.com')
  * @param {string|string[]} email.to - Recipient email(s)
