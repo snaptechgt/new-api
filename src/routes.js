@@ -4,10 +4,26 @@ import { streamObject } from "./services/s3.js";
 import { uploadImage, uploadPDF as uploadPDFMiddleware, uploadVideo as uploadVideoMiddleware } from "./services/common.js";
 import fs from "fs";
 import { unlink } from "fs/promises";
+import { handler as emailHandler } from "./services/email.js";
 
 const routes = express.Router();
 
-routes.get("/", (req, res) => res.json({ status: "Server running." }));
+// Email sending endpoint (server-side Resend)
+// POST /api/email/send
+// Body: { to, subject, html, from }
+routes.post("/email/send", async (req, res) => {
+  try {
+    const result = await emailHandler(req, res);
+    if (result && result.error) {
+      const status = result.status || 500;
+      return res.status(status).json(result);
+    }
+    return res.json(result);
+  } catch (error) {
+    console.error('Error in /email/send route:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
 
 // GET asset from S3 with CORS — streams the object back so both <img> display
 // and canvas export work from a cross-origin S3 bucket that has no CORS config.
