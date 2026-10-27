@@ -6,17 +6,17 @@ Guide for humans and AI agents working in this repository.
 
 **new-api** — a Node.js/Express backend service for:
 - Uploading images, PDFs, and videos to Amazon S3
-- Sending emails via Resend API (newsletter functionality)
+- Sending emails via AgentMail API (newsletter functionality)
 - Serving assets with CORS headers for canvas reads
 
-The entire service is a **backend API**: no frontend UI, no client-side routing. All data lives in AWS S3 and Resend. Called from frontend applications (like cfb-dashboard).
+The entire service is a **backend API**: no frontend UI, no client-side routing. All data lives in AWS S3 and AgentMail. Called from frontend applications (like cfb-dashboard).
 
 ## Tech Stack
 
 - **Runtime**: Node.js 20 (ESM, `type: "module"` in package.json)
 - **Framework**: Express.js
 - **Database**: Amazon S3 (file storage)
-- **Email Service**: Resend API (transactional/boletín emails)
+- **Email Service**: AgentMail API (transactional/boletín emails)
 - **CORS**: Configured for cross-origin requests from cfb-dashboard
 - **Auth**: Basic auth via `ACCESS_KEY` header for protected routes
 
@@ -27,7 +27,7 @@ The entire service is a **backend API**: no frontend UI, no client-side routing.
 npm install
 
 # Or with Docker/Render:
-# - Set RESEND_API_KEY as secret in Render dashboard
+# - Set AGENTMAIL_API_KEY as secret in Render dashboard
 # - Ensure AWS creds are set as env vars
 # - Start: npm start
 ```
@@ -39,7 +39,7 @@ Frontend (cfb-dashboard)                new-api (this service)
   │                                       │
   │   POST /email/send   {to, subject,   │
   │   html}  ──────────────►              │
-  │                                       │ Resend API
+  │                                       │ AgentMail API
   │   gets JSON response                    │
   │                                       ▼
   │                                       │ S3 Bucket
@@ -51,12 +51,14 @@ Frontend (cfb-dashboard)                new-api (this service)
 
 ## API Endpoints
 
-### Email (Resend)
+### Email (AgentMail)
 
 - **POST /email/send**
-  - Body: `{ to, subject, html, from? }`
-  - Sends email via Resend API
-  - Requires `RESEND_API_KEY` in environment
+  - Body: `{ to, subject, html, from }`
+  - Sends email via AgentMail API
+  - Requires `AGENTMAIL_API_KEY` in environment
+  - Free tier: 3,000 emails/month, 100/day
+  - NO domain verification required
   - Returns: `{ success, data, error }`
 
 ### Asset Uploads (S3)
@@ -84,13 +86,13 @@ Frontend (cfb-dashboard)                new-api (this service)
 | `AWSREGION` | Yes | AWS region (e.g., us-east-1) |
 | `AWSACCESS_KEY_ID` | Yes | AWS access key ID |
 | `AWSSECRET_ACCESS_KEY` | Yes | AWS secret access key |
-| `RESEND_API_KEY` | Yes | Resend API key for sending emails |
+| `AGENTMAIL_API_KEY` | Yes | AgentMail API key for sending emails |
 
-For Render deployment, set `RESEND_API_KEY` as a **secret** (not in git).
+For Render deployment, set `AGENTMAIL_API_KEY` as a **secret** (not in git).
 
 ## Security
 
-- `RESEND_API_KEY` **never** reaches the browser — only the backend calls Resend
+- `AGENTMAIL_API_KEY` **never** reaches the browser — only the backend calls AgentMail
 - `ACCESS_KEY` protects API routes (can be overridden for GET / and GET /asset/*)
 - S3 bucket should have proper permissions; this backend adds CORS headers
 - Input validation on all endpoints
@@ -101,7 +103,7 @@ For Render deployment, set `RESEND_API_KEY` as a **secret** (not in git).
 2. Build Command: `npm install`
 3. Start Command: `npm start`
 4. Add Environment Variables in dashboard:
-   - `RESEND_API_KEY` (as secret)
+   - `AGENTMAIL_API_KEY` (as secret)
    - `AWSS3_BUCKET`, `AWSREGION`, `AWSACCESS_KEY_ID`, `AWSSECRET_ACCESS_KEY`
    - `ACCESS_KEY` (optional, default: `Cfb123`)
 5. Service URL: `https://new-api-xxx.onrender.com`
@@ -113,8 +115,8 @@ All endpoints will be at `{url}/api/...` prefix if needed, or root as defined in
 - CORS is configured for `http://localhost:5173` and `https://new-api-r82n.onrender.com` (cfb-dashboard URLs)
 - Add your frontend's URL to the `corsOptions.origin` array in `src/index.js` if changing fronts
 - The `streamObject` function in `s3.js` serves assets with CORS so browser canvas reads work without tainting
-- Resend `from` address should use a verified domain in production (e.g., `Iglesia CFB <boletin@news.iglesiacfb.org>`)
-- Consider rotating `RESEND_API_KEY` if ever committed to git or exposed in chat
+- AgentMail `from` address does NOT require domain verification on Free tier (e.g., `no-reply@cfb.dashboard.com` works out-of-the-box)
+- Consider rotating `AGENTMAIL_API_KEY` if ever committed to git or exposed in chat
 
 ## Related Repos
 
