@@ -13,20 +13,32 @@ const routes = express.Router();
 // Body: { from, to, subject, html }
 routes.post("/v2/send/mail", async (req, res) => {
   try {
+    console.log('POST /v2/send/mail received');
     const result = await emailHandler(req, res);
+    console.log('emailHandler result:', result);
 
-    if (!result) {
-      return res.status(500).json({ error: 'Error: emailHandler returned null' });
+    if (result === null || result === undefined) {
+      return res.status(500).json({ error: 'Error: emailHandler returned null/undefined' });
     }
 
-    if (result.error) {
+    if (typeof result !== 'object') {
+      return res.status(500).json({ error: 'Error: emailHandler returned invalid type' });
+    }
+
+    if ('error' in result && result.error) {
       const status = result.status || 500;
-      console.error('emailHandler error:', result.error);
+      console.error('emailHandler has error:', result.error);
       return res.status(status).json({ error: result.error });
     }
 
-    console.log('emailHandler result:', result);
-    return res.json({ success: true, data: result });
+    if ('success' in result && result.success === true) {
+      console.log('emailHandler success, sending response');
+      return res.json({ success: true, data: result.data });
+    }
+
+    // Fallback for unexpected result format
+    console.warn('Unexpected emailHandler result format:', result);
+    return res.status(500).json({ error: 'Error inesperado en el procesamiento del email' });
   } catch (error) {
     console.error('Error in /v2/send/mail route:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
