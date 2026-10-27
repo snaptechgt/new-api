@@ -47,14 +47,12 @@ function getInitError() {
 // Free tier: 3,000 emails/month, 100/day, NO domain verification required
 // API Docs: https://docs.agentmail.to/quickstart
 
-/**
- * @param {object} email - Email details
- * @param {string} email.from - Sender address (e.g., 'no-reply@cfb.dashboard.com')
- * @param {string|string[]} email.to - Recipient email(s)
- * @param {string} email.subject - Email subject
- * @param {string} email.html - HTML email content
- * @returns {Promise<object>} - Result with success flag and data or error
- */
+/** @param {object} email - Email details */
+/** @param {string} email.from - Sender address */
+/** @param {string|string[]} email.to - Recipient email(s) */
+/** @param {string} email.subject - Email subject */
+/** @param {string} email.html - HTML email content */
+/** @returns {Promise<object>} - Result with success flag and data or error */
 export async function sendEmail(email) {
   console.log('📧 sendEmail called with:');
   console.log('   - from:', email.from);
@@ -160,7 +158,7 @@ export async function handler(req, res) {
     } else if (from && from.includes('<') && !from.includes('Iglesia CFB')) {
       // If from has a different name, replace it with Iglesia CFB
       const nameEmail = from;
-      from = `Iglesia CFB ${nameEmail.substring(nameEmail.indexOf('<'))`;
+      from = `Iglesia CFB ${nameEmail.substring(nameEmail.indexOf('<'))}`;
     }
     const { to, subject, html } = req.body;
 
