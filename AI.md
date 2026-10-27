@@ -116,6 +116,8 @@ All endpoints will be at `{url}/api/...` prefix if needed, or root as defined in
 - Add your frontend's URL to the `corsOptions.origin` array in `src/index.js` if changing fronts
 - The `streamObject` function in `s3.js` serves assets with CORS so browser canvas reads work without tainting
 - AgentMail `from` address does NOT require domain verification on Free tier (e.g., `no-reply@cfb.dashboard.com` works out-of-the-box)
+- **Inbox-based flow**: The code lists available inboxes via `GET /inboxes` and uses the first accessible inbox for sending emails via `POST /inboxes/{inbox_id}/messages/send`. This fixes the 404 'Route not found' error.
+- **from address transformation**: The backend transforms the `from` field to display 'Iglesia CFB' as the sender name, regardless of what the frontend sends.
 - Consider rotating `AGENTMAIL_API_KEY` if ever committed to git or exposed in chat
 
 ## Related Repos
