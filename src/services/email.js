@@ -77,7 +77,7 @@ export async function sendEmail(email) {
 }
 
 // Wrapper for the Express route - validates input and calls sendEmail
-export function handler(req, res) {
+export async function handler(req, res) {
   try {
     const { to, subject, html, from } = req.body;
 
