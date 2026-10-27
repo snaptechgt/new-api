@@ -46,6 +46,7 @@ function getInitError() {
 // This must be called from a backend endpoint, NOT from the browser.
 // The AGENTMAIL_API_KEY stays on the server.
 // Free tier: 3,000 emails/month, 100/day, NO domain verification required
+// API Docs: https://docs.agentmail.to/welcome
 
 /**
  * @param {object} email - Email details
@@ -68,7 +69,9 @@ export async function sendEmail(email) {
     return { success: false, error: errMsg };
   }
 
-  console.log('🚀 Sending to AgentMail API: https://api.agentmail.to/v1/emails');
+  // https://docs.agentmail.to/welcome - use the correct endpoint
+  const AGENTMAIL_ENDPOINT = 'https://api.agentmail.to/v1/emails';
+  console.log('🚀 Sending to AgentMail API:', AGENTMAIL_ENDPOINT);
 
   try {
     const requestBody = {
@@ -79,7 +82,7 @@ export async function sendEmail(email) {
     };
     console.log('📦 Request body to AgentMail:', JSON.stringify(requestBody, null, 2));
 
-    const result = await fetch('https://api.agentmail.to/v1/emails', {
+    const result = await fetch(AGENTMAIL_ENDPOINT, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${client}`,
