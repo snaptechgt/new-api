@@ -123,4 +123,4 @@ All endpoints will be at `{url}/api/...` prefix if needed, or root as defined in
 ## Related Repos
 
 - **cfb-dashboard** — Svelte/Vite frontend that calls these API endpoints
-- **cfb-proyecta** — Main projection software (Vite + Svelte 5 + Tailwind v4 + InsForge)
+- **cfb-proyecta** — Main projection software (Vite + Svelte 5 + Tailwind v4 + Appwrite)
